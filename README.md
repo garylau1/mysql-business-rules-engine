@@ -1,6 +1,6 @@
 # City-145 Library Database Automation (COMP6350 Assignment 3)
 
-Hi there! 👋 This repository contains my **postgraduate Database Systems (COMP6350) Assignment 3** project, implementing a fictional **City-145 Library** database using **MySQL**.
+Hi there! 👋 This repository contains my **full-mark postgraduate Database Systems (COMP6350) Assignment 3** project, implementing a fictional **City-145 Library** database using **MySQL**.
 
 The project focuses on automating library lending, inventory, overdue-fine, membership, and penalty-management rules directly at the database level. The implementation uses **stored procedures, triggers, SQL functions, cursors, and SQL error handling** to enforce business rules and validate library operations.
 
