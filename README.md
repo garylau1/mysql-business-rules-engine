@@ -1,58 +1,93 @@
-# mysql-business-rules-engine
+City-145 Library Database Automation (COMP6350 Assignment 3)
 
-# City-145 Library Database Automation (COMP6350 Assignment 3)
+Hi there! 👋 This repository contains my postgraduate Database Systems (COMP6350) Assignment 3 project, implementing a fictional City-145 Library database using MySQL.
 
-Hi there! 👋 This is my full-mark database project for postgraduate Database Systems (COMP6350) in  University. The assignment was all about helping a fictional library ("City-145 Library") automate their manual book loan and penalty tracking processes using MySQL[cite: 1].
+The project focuses on automating library lending, inventory, overdue-fine, membership, and penalty-management rules directly at the database level. The implementation uses stored procedures, triggers, SQL functions, cursors, and SQL error handling to enforce business rules and validate library operations.
 
-I used pure server-side SQL (stored procedures, triggers, custom error handlers, and cursors) to enforce complex business rules without needing application-layer code[cite: 1].
+📌 Project Goals
 
----
+The system implements and tests several core library business rules:
 
-## 📌 Project Goals
+Maintaining consistency between InStock and OnLoan quantities when books are borrowed and returned.
+Calculating overdue fines at $2 per overdue day.
+Automatically changing members to SUSPENDED when their accumulated fine exceeds the suspension threshold.
+Preventing suspended members from being incorrectly changed back to REGULAR while they still have outstanding fines.
+Identifying members who have been suspended at least twice within a three-year period and terminating them when they still have outstanding fines.
+Enforcing borrowing restrictions, including:
+a maximum of 5 borrowed items within a 3-week (21-day) period;
+preventing a member from borrowing the same book more than once on the same day;
+allowing borrowing only for REGULAR members;
+preventing borrowing after membership expiration;
+preventing borrowing when the required book stock is unavailable.
+Ensuring that a book's return due date does not exceed the member's membership expiration date.
+🛠️ Implementation Highlights
+1. Business Rule Validation with Triggers
 
-The library had several manual rules they wanted to automate[cite: 1]:
-* Keeping real-time track of inventory (`InStock` vs. `OnLoan`) across branches whenever books are borrowed or returned[cite: 1].
-* Automatically calculating late fees ($2/day) and suspending accounts with overdue items or debts over $30[cite: 1].
-* Resetting suspended members back to `REGULAR` only after they pay off their full fine balance[cite: 1].
-* Auto-terminating repeat offenders (members suspended 2+ times in the last 3 years who still owe fines)[cite: 1].
-* Enforcing borrow limits (e.g., max 5 books in 3 weeks, no duplicate borrows on the same day, preventing loans if membership is expired)[cite: 1].
+The overdue trigger is a BEFORE UPDATE trigger on the Member table. It:
 
----
+rejects negative fine values using SIGNAL SQLSTATE '45000';
+prevents a suspended member from being changed to REGULAR while an outstanding fine remains;
+automatically restores a suspended member to REGULAR when their fine is cleared.
 
-## 🛠️ What I Built
+A separate overdue_helper trigger records suspension events in the Count_status table and changes a regular member to SUSPENDED when the fine exceeds the suspension threshold.
 
-### 1. Business Rule Validation Triggers
-* **`overdue` Trigger:** A `BEFORE UPDATE` trigger on the `Member` table[cite: 1]. If someone tries to reset a suspended member to regular without clearing their fines, or enters a negative fine amount, it throws an error using `SIGNAL SQLSTATE "45000"`[cite: 1].
-* **Loan Validation Triggers:** Blocks book borrow attempts if the member's account is suspended/expired, or if the library branch has 0 copies left in stock[cite: 1].
+Additional triggers on Borrowedby enforce borrowing restrictions such as member status, membership expiration, borrowing limits, duplicate same-day borrowing, and book availability.
 
-### 2. Stored Procedures & Functions
-* **`overdue_procedure()`:** Uses a **SQL Cursor** to loop through an audit table (`count_status`), finds members suspended multiple times within a 3-year rolling window, checks their fine balances, and updates their status to `Terminate`[cite: 1]. Includes a `CONTINUE HANDLER` for exception rollbacks[cite: 1].
-* **`borrow_holding()`:** Handles borrowing and returning books in one go[cite: 1]. It updates the `borrowedby` transaction table and simultaneously increments/decrements branch inventory in `holding`[cite: 1].
-* **`count_fine()` & `overdue_countfine()`:** Automatically calculates day-difference penalties using MySQL date functions[cite: 1].
+2. Stored Procedures, Functions & Cursors
+overdue_countfine()
 
----
+Uses a SQL cursor to calculate and update overdue fines for members based on the difference between the return due date and either the actual return date or the current date.
 
-## 🧪 Testing & Edge Cases
+The helper function count_fine() calculates overdue penalties at $2 per day.
 
-To make sure everything worked properly (and get full marks on Task 4[cite: 1]), I built a comprehensive test suite covering tricky edge cases[cite: 1]:
-* Trying to change account status with uncleared fines (verified error code `1644` triggers)[cite: 1].
-* Attempting to insert negative fines[cite: 1].
-* Testing 3-year date window boundaries for repeat suspensions[cite: 1].
-* Handling borrowing attempts when inventory hits 0 or membership expires before the return due date[cite: 1].
+borrow_holding()
 
----
+Coordinates updates between Borrowedby and Holding when a book is borrowed or returned, updating InStock and OnLoan accordingly.
 
-## 🧪 Testing & Verification
+keep_suspend()
 
-A structured test harness was implemented to test edge cases[cite: 1]:
-* Attempting status resets with pending balances (asserting error code `1644`)[cite: 1].
-* Inserting invalid fine amounts (boundary violations)[cite: 1].
-* Evaluating 3-year boundary windows for recurring suspensions[cite: 1].
-* Validating inventory and date-bound loan constraints[cite: 1].
+Checks membership expiration dates and changes expired REGULAR members to SUSPENDED, while recording the suspension event in Count_status.
 
----
+overdue_procedure()
 
-## 📁 Repository Structure
+Uses a SQL cursor and exception handling to examine suspension records in Count_status. It identifies members with more than one suspension within a three-year window and terminates those who still have an outstanding fine.
 
-* `45245673.sql` - Complete SQL source file containing table DDL, triggers, stored procedures, and test queries[cite: 1].
-* `My final report in assignment 3.pdf` - Project documentation with detailed execution results and test output screenshots[cite: 1].
+🧪 Testing & Verification
+
+A structured set of test cases was used to verify the database business rules and edge cases, including:
+
+attempting to restore a suspended member to REGULAR while an outstanding fine remains;
+attempting to assign a negative fine;
+clearing a suspended member's fine and verifying the resulting status;
+testing repeated suspensions within and outside the three-year window;
+testing termination of repeat offenders with outstanding fines;
+testing the maximum five-book borrowing restriction;
+testing duplicate same-day borrowing of the same book;
+testing borrowing by suspended or expired members;
+testing borrowing when book stock is unavailable;
+testing return due dates against membership expiration dates;
+testing consistency between Borrowedby and Holding.
+
+The final report documents these test cases and their observed results.
+
+📁 Repository Structure
+45245673.sql — Complete MySQL source code containing table definitions, sample data, triggers, functions, stored procedures, and test cases.
+My final report in assignment 3.pdf — Project report documenting the database design, implementation approach, test cases, and execution results.
+🎯 Key Database Concepts Demonstrated
+
+This project demonstrates practical use of:
+
+MySQL DDL and DML
+Primary and foreign keys
+Database constraints
+Stored procedures
+Stored functions
+Triggers
+SQL cursors
+SIGNAL SQLSTATE error handling
+CONTINUE HANDLER
+Business-rule enforcement
+Referential integrity
+Database-level validation
+Automated inventory consistency
+Test-case design and verification
