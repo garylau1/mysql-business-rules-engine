@@ -86,7 +86,7 @@ The final report documents these test cases and their observed results.
 
 ## 📁 Repository Structure
 
-* **`SQL_implementation.sql.sql`** — Complete MySQL source code containing table definitions, sample data, triggers, functions, stored procedures, and test cases.
+* **`SQL_implementation.sql`** — Complete MySQL source code containing table definitions, sample data, triggers, functions, stored procedures, and test cases.
 * **`My summary and report.pdf`** — Project report documenting the database design, implementation approach, test cases, and execution results.
 
 ---
