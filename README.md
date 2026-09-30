@@ -1,4 +1,4 @@
-# City-145 Library Database Automation (COMP6350 Assignment 3)
+# City-145 Library Database Automation
 
 Hi there! 👋 This repository contains my **full-mark postgraduate Database Systems (COMP6350) Assignment 3** project, implementing a fictional **City-145 Library** database using **MySQL**.
 
